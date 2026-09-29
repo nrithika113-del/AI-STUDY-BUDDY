@@ -1,0 +1,289 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+     <link rel="stylesheet" href="dashboard.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study Buddy - Dashboard</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #243047;
+        }
+
+        header {
+            background: #273c75;
+            color: white;
+            padding: 20px 30px;
+        }
+
+        header h1 {
+            font-size: 24px;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .welcome {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px #00000010;
+        }
+
+        .welcome h2 {
+            margin-bottom: 12px;
+            color: #273c75;
+        }
+
+        .welcome p {
+            line-height: 1.6;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px #00000010;
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+            color: #273c75;
+        }
+
+        .card p {
+            line-height: 1.5;
+            color: #657087;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>AI Study Buddy</h1>
+    </header>
+
+    <main>
+        <section class="welcome">
+            <h2>Welcome to AI Study Buddy!</h2>
+            <p>
+                Your personal learning assistant.
+                Upload your study materials, create quizzes,
+                generate flashcards and improve your learning.
+            </p>
+        </section>
+
+        <section class="features">
+            <div class="card">
+                <h3>📚 Study Materials</h3>
+                <p>Upload and manage your learning materials.</p>
+            </div>
+
+            <div class="card">
+                <h3>📝 AI Quiz</h3>
+                <p>Practice questions and test your knowledge.</p>
+            </div>
+
+            <div class="card">
+                <h3>📖 Flashcards</h3>
+                <p>Revise important topics using flashcards.</p>
+            </div>
+
+            <div class="card">
+                <h3>📅 Study Plan</h3>
+                <p>Organize your learning with a study plan.</p>
+            </div>
+        </section>
+        
+        <section class="upload-section">
+            <h2>📄 Upload Study Material</h2>
+
+            <p>
+                Upload your PDF study materials to start learning.
+            </p>
+
+            <form id="uploadForm" enctype="multipart/form-data">
+
+                <input
+                    type="file"
+                    id="pdfFile"
+                    name="file"
+                    accept=".pdf"
+                    required
+                >
+
+                <button type="submit">
+                    Upload PDF
+                </button>
+
+            </form>
+            <!-- ==========================================
+     UPLOADED STUDY MATERIALS
+========================================== -->
+
+<section class="materials-section">
+
+    <div class="materials-heading">
+        <h2>My Study Materials</h2>
+        <p>View your uploaded PDFs and start learning.</p>
+    </div>
+
+    <div id="materialsList" class="materials-list">
+
+        <p id="materialsLoading">
+            Loading your study materials...
+        </p>
+
+    </div>
+
+</section>
+
+            <p id="uploadMessage"></p>
+        </section>
+    </main>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
+/* ==========================================
+   8. LOAD UPLOADED STUDY MATERIALS
+========================================== */
+
+async function getMaterials() {
+
+    const materialsList = document.getElementById(
+        "materialsList"
+    );
+
+    if (!materialsList) {
+        return;
+    }
+
+    const accessToken = localStorage.getItem(
+        "accessToken"
+    );
+
+    if (!accessToken) {
+        materialsList.innerHTML =
+            "<p>Please login again to view your materials.</p>";
+        return;
+    }
+
+    materialsList.innerHTML =
+        "<p>Loading your study materials...</p>";
+
+    try {
+
+        const response = await fetch(
+            `${API_BASE_URL}/materials`,
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + accessToken
+                }
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            materialsList.innerHTML =
+                `<p>${result.message || "Unable to load materials."}</p>`;
+            return;
+        }
+
+        const materials = Array.isArray(result)
+            ? result
+            : result.materials || [];
+
+        if (materials.length === 0) {
+            materialsList.innerHTML =
+                "<p>No study materials uploaded yet.</p>";
+            return;
+        }
+
+        materialsList.innerHTML = "";
+
+        materials.forEach(function (material) {
+
+            const card = document.createElement("div");
+
+            card.className = "material-card";
+
+            const title = document.createElement("h3");
+
+            title.textContent =
+                material.title || material.originalName || "Study Material";
+
+            const date = document.createElement("p");
+
+            date.textContent = material.createdAt
+                ? "Uploaded: " +
+                  new Date(material.createdAt).toLocaleDateString()
+                : "Uploaded study material";
+
+            const button = document.createElement("button");
+
+            button.type = "button";
+            button.textContent = "View Material";
+
+            button.addEventListener("click", function () {
+
+                localStorage.setItem(
+                    "selectedMaterialId",
+                    material._id
+                );
+
+                alert(
+                    "Material selected! Next we will connect the AI features."
+                );
+
+            });
+
+            card.appendChild(title);
+            card.appendChild(date);
+            card.appendChild(button);
+
+            materialsList.appendChild(card);
+
+        });
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Error loading materials:",
+            error
+        );
+
+        materialsList.innerHTML =
+            "<p>Cannot connect to backend. Please check your server.</p>";
+
+    }
+
+}
